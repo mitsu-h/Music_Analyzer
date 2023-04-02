@@ -1,3 +1,5 @@
 librosa
 Django==3.2.12
 djangorestframework==3.13.1
+gunicorn==20.1.0
+django-cors-headers==3.10.0

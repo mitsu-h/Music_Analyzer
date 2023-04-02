@@ -15,4 +15,4 @@ RUN npm install
 COPY . .
 
 # 開発サーバーを起動
-CMD ["npm", "run", "serve"]
+CMD ["npm", "run", "dev"]

@@ -7,10 +7,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "5173:5173"
+      - "5174:5174"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    tty: true
 
   rest_api:
     container_name: rest_api
@@ -34,3 +36,6 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: mydb
+
+volumes:
+  db-data:
