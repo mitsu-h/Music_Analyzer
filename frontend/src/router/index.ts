@@ -1,13 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import AuthSwitcher from "../views/AuthSwitcher.vue";
+import Home from "../views/Home.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
+      path: "/",
+      name: "AuthSwitcher",
+      component: AuthSwitcher,
+    },
+    {
+      path: '/home',
       name: 'home',
-      component: HomeView
+      component: Home
     },
     {
       path: '/about',
