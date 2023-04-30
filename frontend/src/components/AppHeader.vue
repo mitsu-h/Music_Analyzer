@@ -35,12 +35,12 @@
     display: flex;
     justify-content: flex-end;
     padding: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: #4e4e4e;
   }
   
   .logout-button {
     font-size: 16px;
-    color: #fff;
+    color: #d9d9d9;
     background: transparent;
     border: none;
     cursor: pointer;

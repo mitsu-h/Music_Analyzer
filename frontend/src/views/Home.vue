@@ -1,18 +1,21 @@
 <template>
   <div class="home">
     <app-header />
-    <h1>Welcome to the Home Page!</h1>
+    <h1>History</h1>
+    <history-table />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import AppHeader from "@/components/AppHeader.vue";
+import HistoryTable from "@/components/HistoryTable.vue";
 
 export default defineComponent({
   name: "Home",
   components: {
     AppHeader,
+    HistoryTable
   },
 });
 </script>
