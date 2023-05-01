@@ -18,7 +18,7 @@ const vuetify = createVuetify({
     defaultSet: 'mdi',
     aliases:{
       ...aliases,
-      mdimagnify:mdiMagnify
+      magnify:mdiMagnify
     },
     sets: {
       mdi,
