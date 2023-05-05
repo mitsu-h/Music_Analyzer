@@ -1,7 +1,6 @@
 <template>
   <div class="home">
     <app-header />
-    <h1>History</h1>
     <history-table />
   </div>
 </template>
@@ -22,6 +21,6 @@ export default defineComponent({
 
 <style scoped>
 .home {
-  text-align: center;
+  /* text-align: center; */
 }
 </style>

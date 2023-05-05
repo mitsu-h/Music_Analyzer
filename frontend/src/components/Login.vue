@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <v-main>
     <h1>Login</h1>
     <form @submit.prevent="submitLogin">
       <EmailInput v-model="email" />
@@ -7,7 +7,7 @@
       <button type="submit">Login</button>
       <span v-if="errorOccurred" class="error-message">Email or password is incorrect</span>
     </form>
-  </div>
+  </v-main>
 </template>
 
 <script lang="ts">
