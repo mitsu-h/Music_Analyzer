@@ -4,9 +4,11 @@
   /* max-width: 1280px; */
   width: 100%;
   margin: 0 auto;
-  color: #d9d9d9;
-  font-weight: normal;
-  background: #333;
+}
+
+.v-main{
+  max-width: 80%;
+  margin: auto;
 }
 
 a,

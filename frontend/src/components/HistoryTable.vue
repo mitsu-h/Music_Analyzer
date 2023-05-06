@@ -3,7 +3,7 @@
   <v-main @click="deselectRow">
     <h1>History</h1>
     <div class="history-table">
-      <v-toolbar flat color="white">
+      <v-toolbar flat color="#4e4e4e">
         <v-text-field
           v-model="search"
           append-icon="$magnify"
@@ -58,7 +58,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-btn :disabled="analyzeDisabled" @click="analyze">Analyze</v-btn>
+    <v-btn class="right-btn" :disabled="analyzeDisabled" @click="analyze">Analyze</v-btn>
     </div>
     </v-main>
   </template>
@@ -184,17 +184,8 @@ import { useRouter } from "vue-router";
   
   <style scoped>
   /* ...existing styles... */
-  .history-table{
-    width: 80%;
-    margin: 0 auto;
-  }
   .v-toolbar{
-    width: 80%;
-    margin: 0 auto;
     padding: 1em;
-  }
-  tr.selected {
-    background-color: rgba(0, 0, 255, 0.1);
   }
 
   .v-row{
@@ -206,6 +197,11 @@ import { useRouter } from "vue-router";
   }
   tr.selected-row>td {
   background-color: rgba(0, 0, 0, 0.1) !important; /* 選択時の背景色 */
+}
+
+.right-btn{
+  display: flex;
+  margin: 0.5em 0 0.5em auto;
 }
 
   </style>
