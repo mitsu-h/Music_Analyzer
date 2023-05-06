@@ -1,28 +1,45 @@
 <template>
-  <div>
-    <h1>Login</h1>
-    <form @submit.prevent="submitLogin">
-      <EmailInput v-model="email" />
-      <PasswordInput v-model="password" />
-      <button type="submit">Login</button>
-      <span v-if="errorOccurred" class="error-message">Email or password is incorrect</span>
-    </form>
-  </div>
+  <v-main>
+    <v-container fluid>
+      <v-row justify="center">
+        <v-col sm="6" md="4">
+          <v-card>
+            <v-card-title>Login</v-card-title>
+            <v-card-text>
+              <v-form @submit.prevent="submitLogin">
+                <v-text-field
+                  v-model="email"
+                  label="Email"
+                  type="email"
+                  outlined
+                  required
+                ></v-text-field>
+                <v-text-field
+                  v-model="password"
+                  label="Password"
+                  type="password"
+                  outlined
+                  required
+                ></v-text-field>
+                <v-btn type="submit" color="primary">Login</v-btn>
+                <v-alert v-if="errorOccurred" type="error" dense>
+                  Email or password is incorrect
+                </v-alert>
+              </v-form>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-main>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-// import { useStore } from "pinia";
 import { useRouter } from "vue-router";
-import EmailInput from './EmailInput.vue';
-import PasswordInput from './PasswordInput.vue';
 import { useAuthStore } from "@/stores/auth";
 
 export default defineComponent({
-  components: {
-    EmailInput,
-    PasswordInput,
-  },
   setup() {
     const email = ref('');
     const password = ref('');
@@ -50,10 +67,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped>
-.error-message {
-  color: red;
-  font-size: 0.8rem;
-}
-</style>

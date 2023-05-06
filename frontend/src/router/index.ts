@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AuthSwitcher from "../views/AuthSwitcher.vue";
 import Home from "../views/Home.vue";
+import Analysis from "../views/Analysis.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/home',
       name: 'home',
       component: Home
+    },
+    {
+      path: '/analysis',
+      name: 'Analysis',
+      component: Analysis
     },
     {
       path: '/about',
