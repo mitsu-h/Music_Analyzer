@@ -10,4 +10,9 @@ urlpatterns = [
     path("rest-auth/", include("dj_rest_auth.urls")),
     path("rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     path("music/video_info/", views.get_video_info, name="video_info"),
+    path(
+        "analysis_results/<str:user_id>",
+        views.get_analysis_by_user_id,
+        name="get_analysis_by_user_id",
+    ),
 ]

@@ -23,7 +23,7 @@
       class="history-table"
       @click:row="selectRow"
       @dblclick:row="analyze"
-      hover="true"
+      hover=true
       >
       <template v-slot:item="{item}">
           <tr
@@ -31,7 +31,7 @@
           <td >
               {{ item.columns.title }}</td>
               <td>{{ item.columns.artist }}</td>
-            <td>{{ item.columns.updatedAt }}</td>
+            <td>{{ item.columns.updated_at }}</td>
           </tr>
         </template>
     </v-data-table>
@@ -64,98 +64,122 @@
   </template>
   
   <script lang="ts">
-  import { defineComponent } from "vue";
+  import { defineComponent, ref, computed, onMounted, toRaw } from "vue";
   import axios from "axios";
   import {mdiPlus} from "@mdi/js";
+import { useRouter } from "vue-router";
 
   
+
   export default defineComponent({
-    name: "HistoryTable",
-    data() {
-      return {
-        mdiPlus,
-        search: "",
-        headers: [
-        { title: "Title", key: "title" },
+  name: "HistoryTable",
+  setup() {
+    const headers = ref([
+      { title: "Title", key: "title" },
       { title: "Artist", key: "artist" },
-      { title: "Last Edit", key: "updatedAt" },
-        ],
-        items: [
-          { title: "Song 1", artist: "Artist 1", updatedAt: '2023-04-28' },
-          { title: "Song 2", artist: "Artist 2", updatedAt: '2023-04-27' },
-          { title: "Song 3", artist: "Artist 3", updatedAt: '2023-04-22' },
-        ],
-        dialog: false,
-    youtubeUrl: "",
-    title: "",
-    artist: "",
-    errorMessage: "",
-    loading:false,
-    selectedRow: null,
-    analyzeDisabled: true,
-      }
-    },
-    computed: {
-    filteredItems() {
-      return this.items.filter((item) => {
+      { title: "Last Edit", key: "updated_at" },
+    ]);
+
+    const search = ref("");
+    async function fetchAnalysisResults() {
+      const response = await fetch("http://localhost:8081/api/analysis_results/a043bae1-6038-03a8-39c0-cb52f511d9cb");
+      const data = await response.json();
+      return data;
+    }
+    const items = ref([]);
+    onMounted(async () => {
+    items.value = await fetchAnalysisResults();
+    console.log(items.value)
+    });
+
+    const filteredItems = computed(() => {
+      if(!items.value) return [];
+      return items.value.filter((item) => {
         return (
-          item.title.toLowerCase().includes(this.search.toLowerCase()) ||
-          item.artist.toLowerCase().includes(this.search.toLowerCase())
+          item.title.toLowerCase().includes(search.value.toLowerCase()) ||
+          item.artist.toLowerCase().includes(search.value.toLowerCase())
         );
       });
-    },
-  },
-    methods: {
-      addItem() {
-        this.dialog = true;
-      },
-      selectRow(row:any) {
-        console.log(row)
-        this.selectedRow = row;
-        this.analyzeDisabled = false;
-      },
-      deselectRow() {
-      this.selectedRow = null
-    },
-      analyze() {
-    if (this.selectedRow) {
-      this.$router.push({ name: "Analysis", params: { analysisId: this.selectedRow.analysis_id } });
-        }
-      },
-      searchVideoInfo() {
-        this.errorMessage = "";
-        if (!this.youtubeUrl) {
-          this.errorMessage = "Please input YouTube URL.";
-          return;
-        }
+    });
 
-        // Set loading state to true
-        this.loading = true;
+    const loading = ref(false);
+    const selectedRow = ref(null);
+    const analyzeDisabled = ref(true);
 
-        // Call API to get video information
-        axios.get("http://localhost:8081/api/music/video_info/", {
+    const selectRow = (item: any) => {
+      selectedRow.value = item;
+      analyzeDisabled.value = false;
+    };
+    const deselectRow = () => {
+      selectedRow.value = null;
+      analyzeDisabled.value = true;
+    };
+
+    //新規追加の処理
+    const dialog = ref(false);
+    const addItem = () => {
+        dialog.value = true;
+      };
+    const youtubeUrl = ref("");
+    const title = ref("");
+    const artist = ref("");
+    const errorMessage = ref("");
+    
+    const router = useRouter();
+    const analyze = () => {
+      if (selectedRow.value) {
+        router.push({ name: "Analysis", params: { analysisId: selectedRow.value.analysis_id } });
+      }
+    };
+
+    const searchVideoInfo = async () => {
+      errorMessage.value = "";
+      if (!youtubeUrl.value) {
+        errorMessage.value = "Please input YouTube URL.";
+        return;
+      }
+
+      loading.value = true;
+
+      try {
+        const response = await axios.get("http://localhost:8081/api/music/video_info/", {
           params: {
-            url: this.youtubeUrl
+            url: youtubeUrl.value
           }
-        }).then((response)=>{
+        });
 
         if (response.data) {
-          this.title = response.data.title;
-          this.artist = response.data.channel;
-        } 
-      }).catch((error) =>{
-          // Handle error: Failed to get video information
-          this.errorMessage = error.response?.data?.error || "An error occurred.";
-        }).finally(()=>{
-          this.loading = false;
-        });
-      },
-  saveItem() {
-    // Save item to the list
-    this.dialog = false;
-  }
-    },
-  })
+          title.value = response.data.title;
+          artist.value = response.data.channel;
+        }
+      } catch (error) {
+        errorMessage.value = error.response?.data?.error || "An error occurred.";
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    return {
+      mdiPlus,
+      headers,
+      search,
+      filteredItems,
+      selectRow,
+      youtubeUrl,
+      title,
+      artist,
+      errorMessage,
+      loading,
+      selectedRow,
+      deselectRow,
+      analyzeDisabled,
+      analyze,
+      searchVideoInfo,
+      dialog,
+      addItem
+    };
+  },
+});
   </script>
   
   <style scoped>

@@ -1,11 +1,13 @@
+from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from rest_framework import generics, status
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, AnalysisResultsSerializer
 from .models import CustomUser
 from .utils import youtube
+from .utils.dynamodb import get_dynamodb_client
 
 from django.contrib.auth import get_user_model
 
@@ -38,3 +40,16 @@ def get_video_info(request):
         )
 
     return Response(video_info)
+
+
+@api_view(["GET"])
+def get_analysis_by_user_id(request, user_id):
+    dynamodb_client = get_dynamodb_client()
+    response = dynamodb_client.query(
+        TableName="AnalysisResults",
+        KeyConditionExpression="user_id = :user_id",
+        ExpressionAttributeValues={":user_id": {"S": user_id}},
+    )
+    serializer = AnalysisResultsSerializer(response["Items"], many=True)
+
+    return Response(serializer.data)

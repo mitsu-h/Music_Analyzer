@@ -25,20 +25,46 @@ services:
       - "8081:8081"
     volumes:
       - ./rest_api:/app
-    depends_on:
-      - db
     tty: true
     env_file:
       - .env
 
-  db:
-    container_name: db
-    image: postgres:13
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb_local
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /data  # 永続化するデータのファイルパス
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - ./dynamodb_data:/data  # データの永続化
+    ports:
+      - 8082:8000
     env_file:
       - .env
-      
+
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: dynamodb-admin
+    tty: true
+    environment:
+      - DYNAMO_ENDPOINT=dynamodb-local:8000
+    ports:
+      - 8083:8001
+    depends_on:
+      - dynamodb-local
+    env_file:
+      - .env
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    entrypoint: bash
+    command: -c "/opt/bin/minio server /export --address :9999 --console-address :9001"
+    volumes:
+        - ./minio_data:/export  # MinIOストレージの永続化
+    ports:
+        - '9000:9999'
+        - '9001:9001'
+    env_file:
+      - .env
 
 volumes:
   db-data:
