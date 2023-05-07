@@ -128,7 +128,7 @@ import { useRouter } from "vue-router";
     const router = useRouter();
     const analyze = () => {
       if (selectedRow.value) {
-        router.push({ name: "Analysis", params: { analysisId: selectedRow.value.analysis_id } });
+        router.push({ name: "Analysis", query: { analysisData: JSON.stringify(selectedRow.value) } });
       }
     };
 

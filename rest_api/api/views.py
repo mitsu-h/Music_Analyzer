@@ -1,3 +1,8 @@
+import base64
+import json
+import os
+
+import boto3
 from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -53,3 +58,28 @@ def get_analysis_by_user_id(request, user_id):
     serializer = AnalysisResultsSerializer(response["Items"], many=True)
 
     return Response(serializer.data)
+
+
+@api_view(["GET"])
+def get_audio_file(request):
+    audio_file_path = json.loads(request.GET.get("separated_audio_files"))
+    print(audio_file_path)
+
+    if audio_file_path:
+        endpoint_url = os.getenv("S3_ENDPOINT")
+        # S3クライアントの作成
+        s3_client = boto3.client("s3", endpoint_url=endpoint_url)
+
+        audio_files_data = {}
+        for key, audio_file_path in audio_file_path.items():
+            response = s3_client.get_object(
+                Bucket="music", Key=audio_file_path.replace("s3://music/", "")
+            )
+            audio_file_data = response["Body"].read()
+            audio_files_data[key] = base64.b64encode(audio_file_data).decode("utf-8")
+
+        return JsonResponse(audio_files_data)
+    else:
+        return Response(
+            {"error": "audio_file_path is required"}, status=status.HTTP_400_BAD_REQUEST
+        )

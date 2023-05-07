@@ -15,4 +15,5 @@ urlpatterns = [
         views.get_analysis_by_user_id,
         name="get_analysis_by_user_id",
     ),
+    path("get_audio_file/", views.get_audio_file, name="get_audio_file"),
 ]
