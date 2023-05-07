@@ -25,23 +25,42 @@ export async function fetchSeparatedAudioFiles(separated_audio_files: Record<str
 }
 
 // 音源データをミックスする関数
-export async function mixAudioBuffers(audioDataList, audioContext) {
+export function mixAudioBuffers(audioDataList, audioContext, gainNodes) {
     const numChannels = 2; // ステレオ
     const mixedBuffer = audioContext.createBuffer(numChannels, audioDataList[0].length, audioContext.sampleRate);
   
     for (let channel = 0; channel < numChannels; channel++) {
       const mixedBufferData = mixedBuffer.getChannelData(channel);
   
-      for (const audioData of audioDataList) {
+      for (let i = 0; i < audioDataList.length; i++) {
+        const audioData = audioDataList[i]
         const channelData = audioData.getChannelData(channel);
-        for (let i = 0; i < channelData.length; i++) {
-          mixedBufferData[i] += channelData[i];
+        const gainNode = gainNodes[i]
+
+        for (let j = 0; j < channelData.length; j++) {
+          mixedBufferData[j] += channelData[j] * gainNode.gainNode.gain.value;
         }
       }
     }
   
     return mixedBuffer;
   }
+
+  export function createGainNodes(audioDataList, audioContext, gains) {
+    const gainNodes = audioDataList.map((audioData, index) => {
+      const gainNode = audioContext.createGain();
+      const source = audioContext.createBufferSource();
+      source.buffer = audioData;
+      const gain = Math.pow(10, gains[index] / 20);
+      gainNode.gain.value = gain;
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      return { source, gainNode };
+    });
+    return gainNodes;
+  }
+  
+  
 
   function writeWavHeader(buffer, sampleRate, numChannels, dataSize) {
     const view = new DataView(buffer);
@@ -94,9 +113,20 @@ export function audioBufferToBlob(audioBuffer) {
   
   
   // 音源データを再生する関数
-  export function playAudioBuffer(audioBuffer, audioContext) {
-    const source = audioContext.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(audioContext.destination);
-    source.start(0);
+  export async function playAudioBuffer(audioContext, gainNodes) {
+    if (audioContext.state === "suspended") {
+      await audioContext.resume();
+    }
+  
+    // 各ゲインノードに新しいソースノードを接続して再生
+    gainNodes.forEach(gainNode => {
+      const source = audioContext.createBufferSource();
+      source.buffer = gainNode.source.buffer;
+      source.loop = true;
+      source.connect(gainNode.gainNode);
+      gainNode.gainNode.connect(audioContext.destination);
+      source.start(0);
+      gainNode.source = source;
+    });
   }
+  
