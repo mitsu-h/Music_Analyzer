@@ -4,19 +4,37 @@
     <v-main>
       <h1>Analysis</h1>
       <v-container fluid>
-          <v-slider
-           v-bind:model-value="playbackPosition"
-            @click="controllPlayback"
-            label="Playback Position"
-            step="0.1"
-            min="0"
-            :max="duration"
-            thumb-label="always"
-            thumb-size="24"
-          ></v-slider>
-    <span>{{ currentTime }} / {{ durationTime }}</span>
-        <v-btn @click="togglePlay">再生/停止</v-btn>
-      <v-row>
+        <audio
+          v-for="(track, index) in trackLabels"
+          :key="index"
+          :ref="audioElementsRef"
+          :src="audioURLs[index]"
+          preload="auto"
+        ></audio>
+        <v-slider
+          v-bind:model-value="playbackPosition"
+          @click="controllPlayback"
+          @input="controllPlayback"
+          label="Playback Position"
+          step="0.1"
+          min="0"
+          :max="duration"
+          thumb-label="always"
+          thumb-size="24"
+        ></v-slider>
+        <span>{{ currentTime }} / {{ durationTime }}</span>
+        <v-btn @click="play">Play</v-btn>
+        <v-btn @click="stop">Stop</v-btn>
+        <v-slider
+          v-model="selectedSpeed"
+          label="Playback Speed"
+          step="0.05"
+          min="0.5"
+          max="2"
+          thumb-label="always"
+          thumb-size="24"
+        ></v-slider>
+        <v-row>
           <v-col v-for="(track, index) in trackLabels" :key="index" cols="12" sm="6" md="4">
             <v-slider
               v-model="gains[index]"
@@ -28,153 +46,159 @@
               thumb-size="24"
             ></v-slider>
           </v-col>
-      </v-row>
+        </v-row>
       </v-container>
     </v-main>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref, watch, computed } from "vue";
-import AppHeader from "@/components/AppHeader.vue";
-import { useRouter } from "vue-router";
-import axios from "axios";
-import {fetchSeparatedAudioFiles, mixAudioBuffers, playAudioBuffer, audioBufferToBlob, createGainNodes} from "@/utils/audioHelper.ts"
+import { defineComponent, onMounted, ref, watch, computed } from 'vue'
+import AppHeader from '@/components/AppHeader.vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import {
+  fetchSeparatedAudioFiles,
+  playAudioBuffers,
+  audioBufferToBlob,
+  createGainNodes
+} from '@/utils/audioHelper.ts'
 
 export default defineComponent({
-  name: "Analysis",
+  name: 'Analysis',
   components: {
-    AppHeader,
+    AppHeader
   },
   setup() {
-    const router = useRouter();
-    const analysisData = ref(null);
-    const audioElement = ref(null);
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const decodedAudioDataList = ref(null);
-    const mixedAudioBuffer = ref(null);
-    const playStartTime = ref(null);
-    const deltaTime = ref(0);
-    const duration = ref(null);
-    const durationTime = computed(() => formatTime(duration.value || 0));
-    const gainNodes = ref([]);
-    
+    const router = useRouter()
+    const analysisData = ref(null)
+    const audioURLs = ref([])
+    const audioElements = ref([])
+    const audioElementsRef = (el) => {
+      if (el) {
+        audioElements.value.push(el)
+      }
+    }
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    const decodedAudioDataList = ref(null)
+    const mixedAudioBuffer = ref(null)
+    const duration = ref(null)
+    const durationTime = computed(() => formatTime(duration.value || 0))
+    const gainNodes = ref([])
+
     // トラックラベルとゲインのリアクティブ変数を定義
-    const trackLabels = ["vocals", "drums", "bass", "other"];
-    const gains = ref([0,0,0,0]);
+    const trackLabels = ['vocals', 'drums', 'bass', 'other']
+    const gains = ref([0, 0, 0, 0])
 
     function startTimer() {
-        if (playStartTime.value !== null) {
-          //  console.log(audioContext.currentTime);
-            const elapsedTime = audioContext.currentTime - playStartTime.value;
-            const duration = gainNodes.value[0]?.source?.buffer?.duration;
-            playbackPosition.value = (elapsedTime / duration) * 100  + deltaTime.value;
-            currentTime.value = formatTime(elapsedTime % duration  + deltaTime.value);
-          }else currentTime.value = formatTime(0);
-          setTimeout(() => {
-            startTimer();
-          }, 100);
-      }
-      
+      //  console.log(audioContext.currentTime);
+      playbackPosition.value = (audioElements.value[0].currentTime / duration.value) * 100
+      currentTime.value = formatTime(audioElements.value[0].currentTime % duration.value)
+      setTimeout(() => {
+        startTimer()
+      }, 100)
+    }
 
     function updateGains(newGains) {
-      
-    gainNodes.value.forEach((gainNode, index) => {
-      console.log(newGains[index])
-      gainNode.gainNode.gain.value = Math.pow(10, newGains[index] / 20);
-      });
+      gainNodes.value.forEach((gainNode, index) => {
+        console.log(newGains[index])
+        gainNode.gainNode.gain.value = Math.pow(10, newGains[index] / 20)
+      })
     }
 
     // ゲインが変更されたときに音源を再ミックスして再生する関数
-    watch(gains, () => {
-      // ゲインを適用して音源を再ミックス
-      console.log("change gain!", gains.value);
+    watch(
+      gains,
+      () => {
+        // ゲインを適用して音源を再ミックス
+        console.log('change gain!', gains.value)
         // ゲインノードの値を更新
-        updateGains(gains.value);
-    }, {deep: true})
+        updateGains(gains.value)
+      },
+      { deep: true }
+    )
 
-
-
-    onMounted(async() => {
-      analysisData.value = JSON.parse(router.currentRoute.value.query.analysisData);
+    onMounted(async () => {
+      analysisData.value = JSON.parse(router.currentRoute.value.query.analysisData)
 
       try {
         console.log(analysisData.value.raw.separated_audio_files)
-        const separatedAudioDataList = await fetchSeparatedAudioFiles(analysisData.value.raw.separated_audio_files);
+        const separatedAudioDataList = await fetchSeparatedAudioFiles(
+          analysisData.value.raw.separated_audio_files
+        )
         console.log(separatedAudioDataList)
         // ArrayBufferをAudioBufferにデコード
         decodedAudioDataList.value = await Promise.all(
-          Object.values(separatedAudioDataList).map((arrayBuffer) => audioContext.decodeAudioData(arrayBuffer)
+          Object.values(separatedAudioDataList).map((arrayBuffer) =>
+            audioContext.decodeAudioData(arrayBuffer)
           )
         )
-        gainNodes.value = createGainNodes(decodedAudioDataList.value, audioContext, gains.value);
+        gainNodes.value = createGainNodes(decodedAudioDataList.value, audioContext, gains.value)
         console.log(gainNodes.value)
-        mixedAudioBuffer.value = mixAudioBuffers(decodedAudioDataList.value, audioContext, gainNodes.value);
-        playAudioBuffer(audioContext, gainNodes.value);
-        playStartTime.value = audioContext.currentTime;
-        duration.value = mixedAudioBuffer.value.duration;
+        duration.value = decodedAudioDataList.value[0].duration
+        decodedAudioDataList.value.forEach(
+          (audioBuffer, index) =>
+            (audioURLs.value[index] = URL.createObjectURL(audioBufferToBlob(audioBuffer)))
+        )
+        await playAudioBuffers(audioElements.value, audioContext, gainNodes.value)
         startTimer()
-
       } catch (error) {
-        console.error("Error fetching audio:", error);
+        console.error('Error fetching audio:', error)
       }
-    });
+    })
 
-    const progress = ref(0);
-    const currentTime = ref(0);
+    const progress = ref(0)
+    const currentTime = ref(0)
 
-    const playbackPosition = ref(0);
+    const playbackPosition = ref(0)
 
-    function controllPlayback (event) {
+    function controllPlayback(event) {
       // クリック位置を0～1の範囲に正規化
-      const clickPosition = event.offsetX / event.target.clientWidth;
+      const clickPosition = event.offsetX / event.target.clientWidth
 
       // 再生位置を計算
-      const newPlaybackPosition = clickPosition * duration.value;
+      const newPlaybackPosition = clickPosition * duration.value
 
-      gainNodes.value.forEach((gainNode) => {
-        if (gainNode.source) {
-          gainNode.source.stop();
-          gainNode.source.disconnect();
-        }
-        const source = audioContext.createBufferSource();
-        source.buffer = gainNode.source.buffer;
-        source.loop = true;
-        source.connect(gainNode.gainNode);
-        source.start(0, newPlaybackPosition);
-        gainNode.source = source;
-        });
-        deltaTime.value = newPlaybackPosition - playbackPosition.value
-      }
-      
-
-
-    function seek(event) {
-      const rect = event.target.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const seekTime = (x / rect.width) * mixedAudioBuffer.value?.duration;
-      audioContext.currentTime = seekTime;
-      progress.value = (seekTime / audioContext.duration) * 100;
+      audioElements.value.forEach((audioElement) => {
+        audioElement.currentTime = newPlaybackPosition
+      })
     }
 
     function formatTime(time) {
-      const minutes = Math.floor(time / 60);
-      const seconds = Math.floor(time % 60);
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      const minutes = Math.floor(time / 60)
+      const seconds = Math.floor(time % 60)
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
-
-    function togglePlay() {
-      if (audioContext.state === "running") {
-        audioContext.suspend();
-      } else if (audioContext.state === "suspended") {
-        audioContext.resume();
-      }
+    function play() {
+      audioElements.value.forEach((audioElement) => {
+        audioElement.play()
+      })
     }
+
+    function stop() {
+      audioElements.value.forEach((audioElement) => {
+        audioElement.pause()
+      })
+    }
+
+    const speedOptions = [
+      0.5, 0.75, 1.0, 1.25, 1.5, 2.0
+      // { text: "0.5x", value: 0.5 },
+      // { text: "1x", value: 1 },
+      // { text: "1.5x", value: 1.5 },
+      // { text: "2x", value: 2 },
+    ]
+    const selectedSpeed = ref(1)
+    // selectedSpeed が変更されたときに playbackRate を更新
+    watch(selectedSpeed, (newSpeed) => {
+      audioElements.value.forEach((audioElement) => (audioElement.playbackRate = newSpeed))
+    })
 
     return {
       analysisData,
-      audioElement,
+      audioElements,
+      audioElementsRef,
       mixedAudioBuffer,
       trackLabels,
       gains,
@@ -183,13 +207,16 @@ export default defineComponent({
       currentTime,
       duration,
       durationTime,
-      seek,
-      togglePlay,
+      play,
+      stop,
       formatTime,
-      controllPlayback
-    };
-  },
-});
+      controllPlayback,
+      audioURLs,
+      speedOptions,
+      selectedSpeed
+    }
+  }
+})
 </script>
 
 <style scoped>
