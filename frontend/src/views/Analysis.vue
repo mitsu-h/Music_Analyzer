@@ -7,6 +7,39 @@
       </v-overlay>
       <h1>Analysis</h1>
       <v-container fluid>
+        <!-- 選択範囲の表示・編集 -->
+        <div>
+          <h2>Loop Range</h2>
+          <v-range-slider
+            v-model="loopRanges[currentLoopRangeIndex]"
+            step="0.1"
+            min="0"
+            :max="duration"
+            thumb-size="24"
+          >
+            <template v-slot:prepend>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-chip v-bind="attrs" v-on="on">{{
+                    formatTime(loopRanges[currentLoopRangeIndex][0])
+                  }}</v-chip>
+                </template>
+                <span>Start</span>
+              </v-tooltip>
+            </template>
+            <template v-slot:append>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-chip v-bind="attrs" v-on="on">{{
+                    formatTime(loopRanges[currentLoopRangeIndex][1])
+                  }}</v-chip>
+                </template>
+                <span>End</span>
+              </v-tooltip>
+            </template>
+          </v-range-slider>
+        </div>
+
         <audio
           v-for="(track, index) in trackLabels"
           :key="index"
@@ -25,8 +58,17 @@
           thumb-size="24"
         ></v-slider>
         <span>{{ currentTime }} / {{ durationTime }}</span>
-        <v-btn @click="play">Play</v-btn>
-        <v-btn @click="stop">Stop</v-btn>
+        <v-btn @click="togglePlayback">
+          {{ isPlaying ? 'Stop' : 'Play' }}
+        </v-btn>
+        <v-btn :color="isLooping ? 'primary' : ''" @click="isLooping = !isLooping">
+          {{ isLooping ? 'Loop On' : 'Loop Off' }}
+        </v-btn>
+        <v-select
+          v-model="currentLoopRangeIndex"
+          :items="[0, 1, 2]"
+          label="Select Loop Range"
+        ></v-select>
         <v-slider
           v-model="selectedSpeed"
           label="Playback Speed"
@@ -153,10 +195,36 @@ export default defineComponent({
       }
     })
 
+    // 選択範囲のループ再生
+    const loopRanges = ref([
+      [0, duration.value / 3],
+      [duration.value / 3, (duration.value / 3) * 2],
+      [(duration.value / 3) * 2, duration.value]
+    ])
+    const currentLoopRangeIndex = ref(0)
+    const isLooping = ref(false)
+
     const progress = ref(0)
     const currentTime = ref(0)
 
     const playbackPosition = ref(0)
+
+    watch(
+      playbackPosition,
+      (newPlaybackPosition) => {
+        if (!isLooping.value) return
+        const currentLoopRange = loopRanges.value[currentLoopRangeIndex.value]
+        if (
+          newPlaybackPosition < currentLoopRange[0] ||
+          newPlaybackPosition > currentLoopRange[1]
+        ) {
+          audioElements.value.forEach((audioElement) => {
+            audioElement.currentTime = currentLoopRange[0]
+          })
+        }
+      },
+      { deep: true }
+    )
 
     function controllPlayback(event) {
       // クリック位置を0～1の範囲に正規化
@@ -176,6 +244,7 @@ export default defineComponent({
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
+    const isPlaying = ref(false)
     async function play() {
       if (audioContext.state === 'suspended') {
         await audioContext.resume()
@@ -189,6 +258,15 @@ export default defineComponent({
       audioElements.value.forEach((audioElement) => {
         audioElement.pause()
       })
+    }
+
+    const togglePlayback = () => {
+      if (isPlaying.value) {
+        stop()
+      } else {
+        play()
+      }
+      isPlaying.value = !isPlaying.value
     }
 
     const speedOptions = [
@@ -217,13 +295,16 @@ export default defineComponent({
       currentTime,
       duration,
       durationTime,
-      play,
-      stop,
+      loopRanges,
+      currentLoopRangeIndex,
+      isLooping,
+      togglePlayback,
       formatTime,
       controllPlayback,
       audioURLs,
       speedOptions,
-      selectedSpeed
+      selectedSpeed,
+      isPlaying
     }
   }
 })

@@ -127,7 +127,7 @@ export function audioBufferToBlob(audioBuffer: AudioBuffer) {
 }
 
 // 音源データを再生する関数
-export async function playAudioBuffers(
+export function playAudioBuffers(
   audioElements: HTMLMediaElement[],
   audioContext: AudioContext,
   gainNodes: GainNode[]
