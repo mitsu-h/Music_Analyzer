@@ -2,6 +2,9 @@
   <div class="analysis">
     <app-header />
     <v-main>
+      <v-overlay v-model="overlay" class="align-center justify-center">
+        <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
+      </v-overlay>
       <h1>Analysis</h1>
       <v-container fluid>
         <audio
@@ -19,7 +22,6 @@
           step="0.1"
           min="0"
           :max="duration"
-          thumb-label="always"
           thumb-size="24"
         ></v-slider>
         <span>{{ currentTime }} / {{ durationTime }}</span>
@@ -43,6 +45,7 @@
               min="-40"
               max="12"
               thumb-label="always"
+              direction="vertical"
               thumb-size="24"
             ></v-slider>
           </v-col>
@@ -71,6 +74,7 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter()
+    const overlay = ref(true)
     const analysisData = ref(null)
     const audioURLs = ref([])
     const audioElements = ref([])
@@ -92,7 +96,7 @@ export default defineComponent({
 
     function startTimer() {
       //  console.log(audioContext.currentTime);
-      playbackPosition.value = (audioElements.value[0].currentTime / duration.value) * 100
+      playbackPosition.value = audioElements.value[0].currentTime
       currentTime.value = formatTime(audioElements.value[0].currentTime % duration.value)
       setTimeout(() => {
         startTimer()
@@ -142,6 +146,7 @@ export default defineComponent({
         )
         await playAudioBuffers(audioElements.value, audioContext, gainNodes.value)
         startTimer()
+        overlay.value = false
       } catch (error) {
         console.error('Error fetching audio:', error)
       }
@@ -196,6 +201,7 @@ export default defineComponent({
     })
 
     return {
+      overlay,
       analysisData,
       audioElements,
       audioElementsRef,

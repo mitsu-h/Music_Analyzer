@@ -1,27 +1,31 @@
 import axios from 'axios'
 
-// Fetch separated audio files and return their ArrayBuffer
-export async function fetchSeparatedAudioFiles(separated_audio_files: Record<string, string>) {
+// 音源を取得する非同期関数
+async function fetchAudioFile(audio_file_path: string) {
   const response = await axios.get('http://localhost:8081/api/get_audio_file/', {
     params: {
-      separated_audio_files: separated_audio_files
+      audio_file_path: audio_file_path
     }
   })
-  const data = response.data
-
-  const arrayBuffers: Record<string, ArrayBuffer> = {}
-  for (const key in data) {
-    const base64Data = data[key]
-    const binaryData = atob(base64Data)
-    const len = binaryData.length
-    const bytes = new Uint8Array(len)
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryData.charCodeAt(i)
-    }
-    arrayBuffers[key] = bytes.buffer
+  const base64Data = response.data.audio_file_data
+  const binaryData = atob(base64Data)
+  const len = binaryData.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryData.charCodeAt(i)
   }
+  return bytes.buffer
+}
 
-  return arrayBuffers
+// Promise.allを使用して音源を並行して取得
+export async function fetchSeparatedAudioFiles(separated_audio_files: string) {
+  const audioFiles = JSON.parse(separated_audio_files)
+  const promises = Object.values(audioFiles).map(fetchAudioFile)
+  const arrayBuffers = await Promise.all(promises)
+  return Object.keys(audioFiles).reduce((result, key, i) => {
+    result[key] = arrayBuffers[i]
+    return result
+  }, {})
 }
 
 // 音源データをミックスする関数
