@@ -132,10 +132,6 @@ export async function playAudioBuffers(
   audioContext: AudioContext,
   gainNodes: GainNode[]
 ) {
-  if (audioContext.state === 'suspended') {
-    await audioContext.resume()
-  }
-
   gainNodes.forEach((gainNode: GainNode, index) => {
     const mediaElementSource = audioContext.createMediaElementSource(audioElements[index])
     mediaElementSource.connect(gainNode.gainNode)

@@ -108,6 +108,7 @@ export default defineComponent({
         console.log(newGains[index])
         gainNode.gainNode.gain.value = Math.pow(10, newGains[index] / 20)
       })
+      console.log(gainNodes)
     }
 
     // ゲインが変更されたときに音源を再ミックスして再生する関数
@@ -144,7 +145,7 @@ export default defineComponent({
           (audioBuffer, index) =>
             (audioURLs.value[index] = URL.createObjectURL(audioBufferToBlob(audioBuffer)))
         )
-        await playAudioBuffers(audioElements.value, audioContext, gainNodes.value)
+        playAudioBuffers(audioElements.value, audioContext, gainNodes.value)
         startTimer()
         overlay.value = false
       } catch (error) {
@@ -175,7 +176,10 @@ export default defineComponent({
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
-    function play() {
+    async function play() {
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume()
+      }
       audioElements.value.forEach((audioElement) => {
         audioElement.play()
       })
