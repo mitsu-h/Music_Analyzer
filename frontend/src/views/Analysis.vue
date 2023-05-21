@@ -57,18 +57,20 @@
           :max="duration"
           thumb-size="24"
         ></v-slider>
-        <span>{{ currentTime }} / {{ durationTime }}</span>
-        <v-btn @click="togglePlayback">
-          {{ isPlaying ? 'Stop' : 'Play' }}
-        </v-btn>
-        <v-btn :color="isLooping ? 'primary' : ''" @click="isLooping = !isLooping">
-          {{ isLooping ? 'Loop On' : 'Loop Off' }}
-        </v-btn>
-        <v-select
-          v-model="currentLoopRangeIndex"
-          :items="[0, 1, 2]"
-          label="Select Loop Range"
-        ></v-select>
+        <div style="display: flex; align-items: center">
+          <span>{{ currentTime }} / {{ durationTime }}</span>
+          <v-btn @click="togglePlayback">
+            {{ isPlaying ? 'Stop' : 'Play' }}
+          </v-btn>
+          <v-btn :color="isLooping ? 'primary' : ''" @click="isLooping = !isLooping">
+            {{ isLooping ? 'Loop On' : 'Loop Off' }}
+          </v-btn>
+          <v-select
+            v-model="currentLoopRangeIndex"
+            :items="[0, 1, 2]"
+            label="Select Loop Range"
+          ></v-select>
+        </div>
         <v-slider
           v-model="selectedSpeed"
           label="Playback Speed"
@@ -78,8 +80,9 @@
           thumb-label="always"
           thumb-size="24"
         ></v-slider>
-        <v-row>
-          <v-col v-for="(track, index) in trackLabels" :key="index" cols="12" sm="6" md="4">
+        <h2>Volume Controls</h2>
+        <v-row no-gutters class="mb-6">
+          <v-col v-for="(track, index) in trackLabels" :key="index" cols="12" sm="4" md="3">
             <v-slider
               v-model="gains[index]"
               :label="`${track}: ${gains[index]} dB`"
