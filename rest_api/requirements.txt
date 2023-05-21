@@ -7,5 +7,6 @@ django-cors-headers==3.10.0
 djangorestframework-simplejwt
 dj-rest-auth
 django-allauth
+django-storages
 psycopg2
 yt_dlp
