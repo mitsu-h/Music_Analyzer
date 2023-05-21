@@ -9,13 +9,13 @@
       <v-container fluid>
         <!-- 選択範囲の表示・編集 -->
         <div>
-          <h2>Loop Range</h2>
+          <h2>Loop Range {{ currentLoopRangeIndex }}</h2>
           <v-range-slider
             v-model="loopRanges[currentLoopRangeIndex]"
             step="0.1"
             min="0"
             :max="duration"
-            thumb-size="24"
+            class="loop-range"
           >
             <template v-slot:prepend>
               <v-tooltip bottom>
@@ -57,6 +57,7 @@
           :max="duration"
           thumb-size="24"
         ></v-slider>
+        <!-- 操作系のボタン -->
         <div style="display: flex; align-items: center">
           <span>{{ currentTime }} / {{ durationTime }}</span>
           <v-btn @click="togglePlayback">
@@ -65,10 +66,15 @@
           <v-btn :color="isLooping ? 'primary' : ''" @click="isLooping = !isLooping">
             {{ isLooping ? 'Loop On' : 'Loop Off' }}
           </v-btn>
+          <!-- 
+            * TODO: 横幅いっぱいになってるので、ボタンと同じぐらいの幅にする
+            * 表示項目をもっとわかりやすくする
+          -->
           <v-select
             v-model="currentLoopRangeIndex"
             :items="[0, 1, 2]"
             label="Select Loop Range"
+            :width="10"
           ></v-select>
         </div>
         <v-slider
@@ -314,4 +320,9 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/* TODO: rangeのsliderの玉のサイズ調整 */
+.loop-range >>> .v-slider__thumb__surface {
+  height: 24px;
+  width: 10px;
+}
 </style>
