@@ -159,6 +159,25 @@ import { useRouter } from "vue-router";
       }
     };
 
+    const saveItem = () => {
+      if (!youtubeUrl.value) {
+        errorMessage.value = "Please input YouTube URL.";
+        return;
+      }
+      axios.get("http://localhost:8081/api/download_and_separate_audio/", {
+        params: {
+          // TODO: userIdを変数化、実際のユーザに置き換える
+          user_id: "a043bae1-6038-03a8-39c0-cb52f511d9cb",
+          url: youtubeUrl.value,
+          title: title.value,
+          artist: artist.value
+
+        }
+      }).then((response) =>
+        console.log("sccess put data")
+      ).catch((error)=>console.error(error))
+    }
+
     return {
       mdiPlus,
       headers,
@@ -176,7 +195,8 @@ import { useRouter } from "vue-router";
       analyze,
       searchVideoInfo,
       dialog,
-      addItem
+      addItem,
+      saveItem
     };
   },
 });

@@ -185,3 +185,5 @@ minio_data/
 
 #dynamodb data
 dynamodb_data/
+
+pretrained_models

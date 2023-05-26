@@ -72,9 +72,11 @@ dummy_data = {
         }
     ),
     "last_played_position": 0,
-    "loop_intervals": json.dumps([{"start": 0, "end": 10}]),
+    "loop_intervals": json.dumps(
+        [{"start": 0, "end": 10}], [{"start": 0, "end": 10}], [{"start": 0, "end": 10}]
+    ),
     "playback_speed": 1,
-    "instruments_volume": json.dumps({"vocals": 1, "drums": 1, "bass": 1}),
+    "instruments_volume": json.dumps({"vocals": 1, "drums": 1, "bass": 1, "other": 1}),
     "created_at": datetime.utcnow().isoformat(),
     "updated_at": datetime.utcnow().isoformat(),
     "comment": "Sample comment",

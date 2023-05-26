@@ -16,4 +16,9 @@ urlpatterns = [
         name="get_analysis_by_user_id",
     ),
     path("get_audio_file/", views.get_audio_file, name="get_audio_file"),
+    path(
+        "download_and_separate_audio/",
+        views.download_and_separate_audio,
+        name="download_and_separate_audio",
+    ),
 ]
