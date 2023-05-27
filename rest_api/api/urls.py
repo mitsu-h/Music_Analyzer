@@ -21,4 +21,5 @@ urlpatterns = [
         views.download_and_separate_audio,
         name="download_and_separate_audio",
     ),
+    path('save_to_dynamodb/', views.save_to_dynamodb, name='save_to_dynamodb'),
 ]

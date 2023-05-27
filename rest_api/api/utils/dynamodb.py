@@ -79,3 +79,40 @@ def put_analyze_info(
     table.put_item(TableName="AnalysisResults", Item=data)
 
     return data
+
+def put_interval_info(
+    user_id: str,
+    analysis_id: str,
+    last_played_position: int,
+    loop_intervals: list[list],
+    loop_range_index: int,
+    is_looping: bool,
+    playback_speed: float,
+    instruments_volume: dict,
+    table,
+    ):
+    table.update_item(TableName="AnalysisResults", 
+        Key={
+        'user_id': {'S': user_id},
+        'analysis_id': {'S': analysis_id},
+    },
+    ExpressionAttributeNames={
+        '#LPP': 'last_played_position',
+        '#LI': 'loop_intervals',
+        '#LRI': 'loop_range_index',
+        '#IL': 'is_looping',
+        '#PS': 'playback_speed',
+        '#IV': 'instruments_volume',
+        '#UA': 'updated_at',
+    },
+    ExpressionAttributeValues={
+        ':lpp': {'N': str(last_played_position)},
+        ':li': {'S': json.dumps(loop_intervals)},
+        ':lri': {'N': str(loop_range_index)},
+        ':il': {'BOOL': is_looping},
+        ':ps': {'N': str(playback_speed)},
+        ':iv': {'S': json.dumps(instruments_volume)},
+        ':ua': {'S': datetime.utcnow().isoformat()},
+    },
+    UpdateExpression="SET #LPP = :lpp, #LI = :li, #LRI = :lri, #IL = :il, #PS = :ps, #IV = :iv, #UA = :ua",
+    ReturnValues="UPDATED_NEW")

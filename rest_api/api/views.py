@@ -13,7 +13,7 @@ from .serializers import UserSerializer, AnalysisResultsSerializer
 from .models import CustomUser
 from .utils.youtube import _get_video_info, download_youtube_audio_info
 from .utils.separate import separate_and_upload_to_s3
-from .utils.dynamodb import get_dynamodb_client, put_analyze_info
+from .utils.dynamodb import get_dynamodb_client, put_analyze_info, put_interval_info
 
 from django.contrib.auth import get_user_model
 
@@ -113,3 +113,25 @@ def download_and_separate_audio(request):
     serializer = AnalysisResultsSerializer(put_data)
 
     return Response(serializer.data)
+
+@api_view(["POST"])
+def save_to_dynamodb(request):
+    if request.method == 'POST':
+        data = request.data
+
+        try:
+            put_interval_info(
+                user_id=data['user_id'],
+                analysis_id=data['analysis_id'],
+                last_played_position=data['last_played_position'],
+                loop_intervals=data['loop_intervals'],
+                loop_range_index=data['loop_range_index'],
+                is_looping=data['is_looping'],
+                playback_speed=data['playback_speed'],
+                instruments_volume=data['instruments_volume'],
+                table=dynamodb_client,
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"message": "Data saved successfully"}, status=status.HTTP_200_OK)
