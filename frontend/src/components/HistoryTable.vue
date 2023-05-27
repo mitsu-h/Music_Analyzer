@@ -67,6 +67,7 @@
   import axios from "axios";
   import {mdiPlus} from "@mdi/js";
 import { useRouter } from "vue-router";
+import { useMusicStore } from "@/stores/musicInfo";
 
   
 
@@ -86,6 +87,7 @@ import { useRouter } from "vue-router";
       return data;
     }
     const items = ref([]);
+    const musicStore = useMusicStore()
     onMounted(async () => {
     items.value = await fetchAnalysisResults();
     console.log(items.value)
@@ -127,7 +129,8 @@ import { useRouter } from "vue-router";
     const router = useRouter();
     const analyze = () => {
       if (selectedRow.value) {
-        router.push({ name: "Analysis", query: { analysisData: JSON.stringify(selectedRow.value) } });
+        musicStore.setAnalysisData(selectedRow.value)
+        router.push({ name: "Analysis"});
       }
     };
 
@@ -181,7 +184,8 @@ import { useRouter } from "vue-router";
         loading.value = false;
         // DynamoDBに書き込んだ楽曲でAnalysisページへと遷移
         // また、テーブルから選択したときとobjectが一致するようにrawを追加
-        router.push({ name: "Analysis", query: { analysisData: JSON.stringify({raw: response.data}) } });
+        musicStore.setAnalysisData({raw: response.data})
+        router.push({ name: "Analysis"});
       }
       ).catch((error)=>errorMessage.value = error.response?.data?.error || "An error occurred.")
     }

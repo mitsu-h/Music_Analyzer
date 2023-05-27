@@ -110,6 +110,7 @@
 import { defineComponent, onMounted, ref, watch, computed } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useRouter } from 'vue-router'
+import { useMusicStore } from '@/stores/musicInfo'
 import axios from 'axios'
 import {
   fetchSeparatedAudioFiles,
@@ -126,8 +127,9 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter()
+    const musicStore = useMusicStore()
     const overlay = ref(true)
-    const analysisData = ref(null)
+    const analysisData = ref(musicStore.analysisData.raw)
     const audioURLs = ref([])
     const audioElements = ref([])
     const audioElementsRef = (el) => {
@@ -256,7 +258,7 @@ export default defineComponent({
     })
 
     onMounted(async () => {
-      analysisData.value = JSON.parse(router.currentRoute.value.query.analysisData).raw
+      // analysisData.value = JSON.parse(router.currentRoute.value.query.analysisData).raw
 
       // try {
         console.log(analysisData.value.separated_audio_files)
