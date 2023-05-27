@@ -78,4 +78,4 @@ def put_analyze_info(
     # ダミーデータをテーブルに追加
     table.put_item(TableName="AnalysisResults", Item=data)
 
-    print(f"put data: {data}")
+    return data

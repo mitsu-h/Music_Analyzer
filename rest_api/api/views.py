@@ -99,7 +99,7 @@ def download_and_separate_audio(request):
         original_audio_path,
     ) = download_youtube_audio_info(url, s3_client, output_s3_bucket="music")
     separated_audio_files = separate_and_upload_to_s3(original_audio_file, s3_client)
-    put_analyze_info(
+    put_data = put_analyze_info(
         user_id,
         url,
         title,
@@ -110,4 +110,6 @@ def download_and_separate_audio(request):
         duration,
         dynamodb_client,
     )
-    return HttpResponse("success separate and put dynamo db!")
+    serializer = AnalysisResultsSerializer(put_data)
+
+    return Response(serializer.data)

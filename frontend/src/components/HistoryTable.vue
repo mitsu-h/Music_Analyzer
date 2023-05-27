@@ -44,7 +44,6 @@
           <v-text-field 
                   label="YouTube URL" v-model="youtubeUrl"
                   :error-messages="errorMessage"
-                  :loading="loading"
                   append-inner-icon="$magnify"
                   @click:append-inner="searchVideoInfo">
           </v-text-field>
@@ -54,7 +53,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="dialog = false">Cancel</v-btn>
-          <v-btn color="blue darken-1" text @click="saveItem">Save</v-btn>
+          <v-btn color="blue darken-1" text :loading="loading" @click="saveItem">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -164,6 +163,10 @@ import { useRouter } from "vue-router";
         errorMessage.value = "Please input YouTube URL.";
         return;
       }
+      if (!title.value || !artist.value){
+        errorMessage.value = "Please click search icon or input title and artist.";
+      }
+      loading.value = true;
       axios.get("http://localhost:8081/api/download_and_separate_audio/", {
         params: {
           // TODO: userIdを変数化、実際のユーザに置き換える
@@ -173,9 +176,14 @@ import { useRouter } from "vue-router";
           artist: artist.value
 
         }
-      }).then((response) =>
-        console.log("sccess put data")
-      ).catch((error)=>console.error(error))
+      }).then((response) =>{
+        console.log("sccess put data");
+        loading.value = false;
+        // DynamoDBに書き込んだ楽曲でAnalysisページへと遷移
+        // また、テーブルから選択したときとobjectが一致するようにrawを追加
+        router.push({ name: "Analysis", query: { analysisData: JSON.stringify({raw: response.data}) } });
+      }
+      ).catch((error)=>errorMessage.value = error.response?.data?.error || "An error occurred.")
     }
 
     return {
