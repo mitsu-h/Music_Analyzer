@@ -43,6 +43,8 @@ class AnalysisResultsSerializer(serializers.Serializer):
     separated_audio_files = DynamoDBField()
     last_played_position = DynamoDBField()
     loop_intervals = DynamoDBField()
+    loop_range_index = DynamoDBField()
+    is_looping = DynamoDBField()
     playback_speed = DynamoDBField()
     instruments_volume = DynamoDBField()
     created_at = DynamoDBField()

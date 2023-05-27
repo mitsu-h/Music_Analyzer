@@ -66,9 +66,11 @@ def put_analyze_info(
                 ]
             )
         },
+        "loop_range_index": {"N": "0"},
+        "is_looping": {"BOOL": False},
         "playback_speed": {"N": "1"},
         "instruments_volume": {
-            "S": json.dumps({"vocals": 1, "drums": 1, "bass": 1, "other": 1})
+            "S": json.dumps({"vocals": 0, "drums": 0, "bass": 0, "other": 0})
         },
         "created_at": {"S": datetime.utcnow().isoformat()},
         "updated_at": {"S": datetime.utcnow().isoformat()},

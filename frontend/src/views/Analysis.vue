@@ -284,7 +284,11 @@ export default defineComponent({
       })
         duration.value = decodedAudioDataList.value[0].duration
         loopRanges.value = JSON.parse(analysisData.value.loop_intervals)
+        currentLoopRangeIndex.value = Number(analysisData.value.loop_range_index)
+        isLooping.value = analysisData.value.is_looping
         selectedSpeed.value = Number(analysisData.value.playback_speed)
+        audioElements.value.forEach((audioElement) => (audioElement.playbackRate = selectedSpeed.value))
+        gains.value = Object.values(JSON.parse(analysisData.value.instruments_volume))
 
         startTimer()
         overlay.value = false
