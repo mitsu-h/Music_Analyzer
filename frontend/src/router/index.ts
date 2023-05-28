@@ -34,12 +34,12 @@ const router = createRouter({
     }
   ]
 })
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // `requiresAuth`がtrueに設定されているルートに対して認証を要求します。
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // ユーザーがログインしていない場合、ログインページにリダイレクトします。
     const authStore = useAuthStore()
-    if (!authStore.isLoggedIn) {
+    if (!await authStore.isLoggedIn) {
       next({
         path: '/',
         query: { redirect: to.fullPath }

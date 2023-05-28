@@ -32,8 +32,9 @@ class RegisterUserView(generics.CreateAPIView):
 
 
 @api_view(["GET"])
-def hello(request):
-    return Response({"message": "Hello from Django!"})
+@permission_classes([IsAuthenticated])
+def check_token(request):
+    return Response({"message": "token is valid!"})
 
 
 @api_view(["GET"])
