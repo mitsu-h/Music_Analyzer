@@ -107,7 +107,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref, watch, computed } from 'vue'
+import { defineComponent, onMounted, ref, watch, computed, onBeforeUnmount } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useRouter } from 'vue-router'
 import { useMusicStore } from '@/stores/musicInfo'
@@ -144,6 +144,9 @@ export default defineComponent({
     const durationTime = computed(() => formatTime(duration.value || 0))
     const gainNodes = ref([])
 
+    const intervalId = ref(null)
+    const timerId = ref(null)
+
     // トラックラベルとゲインのリアクティブ変数を定義
     const trackLabels = ['vocals', 'drums', 'bass', 'other']
     const gains = ref([0, 0, 0, 0])
@@ -152,7 +155,7 @@ export default defineComponent({
       //  console.log(audioContext.currentTime);
       playbackPosition.value = audioElements.value[0].currentTime
       currentTime.value = formatTime(audioElements.value[0].currentTime % duration.value)
-      setTimeout(() => {
+      timerId.value = setTimeout(() => {
         startTimer()
       }, 100)
     }
@@ -318,8 +321,13 @@ export default defineComponent({
         }
 
         // 30秒ごとにsaveIntervalInfoを実行
-        useInterval(saveIntervalInfo, 30000)
+        intervalId.value = useInterval(saveIntervalInfo, 30000)
       // }
+    })
+
+    onBeforeUnmount(() => {
+      clearTimeout(timerId.value)
+      clearInterval(intervalId.value)
     })
 
     return {

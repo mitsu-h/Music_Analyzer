@@ -5,7 +5,8 @@ import os
 import boto3
 from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 from rest_framework import generics, status
 
@@ -54,11 +55,13 @@ def get_video_info(request):
 
 
 @api_view(["GET"])
-def get_analysis_by_user_id(request, user_id):
+@permission_classes([IsAuthenticated])
+def get_analysis_by_user_id(request):
+    user_id = request.user.id
     response = dynamodb_client.query(
         TableName="AnalysisResults",
         KeyConditionExpression="user_id = :user_id",
-        ExpressionAttributeValues={":user_id": {"S": user_id}},
+        ExpressionAttributeValues={":user_id": {"S": str(user_id)}},
     )
     serializer = AnalysisResultsSerializer(response["Items"], many=True)
 
@@ -66,6 +69,7 @@ def get_analysis_by_user_id(request, user_id):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_audio_file(request):
     audio_file_path = request.GET.get("audio_file_path")
     print(audio_file_path)
@@ -85,8 +89,9 @@ def get_audio_file(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def download_and_separate_audio(request):
-    user_id = request.GET.get("user_id")
+    user_id = str(request.user.id)
     url = request.GET.get("url")
     title = request.GET.get("title")
     artist = request.GET.get("artist")
@@ -110,18 +115,20 @@ def download_and_separate_audio(request):
         duration,
         dynamodb_client,
     )
+    os.remove(original_audio_file)
     serializer = AnalysisResultsSerializer(put_data)
 
     return Response(serializer.data)
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def save_to_dynamodb(request):
     if request.method == 'POST':
         data = request.data
 
         try:
             put_interval_info(
-                user_id=data['user_id'],
+                user_id=str(request.user.id),
                 analysis_id=data['analysis_id'],
                 last_played_position=data['last_played_position'],
                 loop_intervals=data['loop_intervals'],

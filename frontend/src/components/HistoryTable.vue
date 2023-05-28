@@ -63,11 +63,12 @@
   </template>
   
   <script lang="ts">
-  import { defineComponent, ref, computed, onMounted, toRaw } from "vue";
+  import { defineComponent, ref, computed, onMounted } from "vue";
   import axios from "axios";
   import {mdiPlus} from "@mdi/js";
 import { useRouter } from "vue-router";
 import { useMusicStore } from "@/stores/musicInfo";
+import { useAuthStore } from "@/stores/auth";
 
   
 
@@ -79,12 +80,12 @@ import { useMusicStore } from "@/stores/musicInfo";
       { title: "Artist", key: "artist" },
       { title: "Last Edit", key: "updated_at" },
     ]);
-
+    const authStore = useAuthStore()
+    axios.defaults.headers.common["Authorization"] = `Bearer ${authStore.token}`;
     const search = ref("");
     async function fetchAnalysisResults() {
-      const response = await fetch("http://localhost:8081/api/analysis_results/a043bae1-6038-03a8-39c0-cb52f511d9cb");
-      const data = await response.json();
-      return data;
+      const response = await axios.get("http://localhost:8081/api/analysis_results/");
+      return response.data;
     }
     const items = ref([]);
     const musicStore = useMusicStore()
@@ -94,7 +95,7 @@ import { useMusicStore } from "@/stores/musicInfo";
     });
 
     const filteredItems = computed(() => {
-      if(!items.value) return [];
+      if(!items.value.length) return [];
       return items.value.filter((item) => {
         return (
           item.title.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -172,8 +173,6 @@ import { useMusicStore } from "@/stores/musicInfo";
       loading.value = true;
       axios.get("http://localhost:8081/api/download_and_separate_audio/", {
         params: {
-          // TODO: userIdを変数化、実際のユーザに置き換える
-          user_id: "a043bae1-6038-03a8-39c0-cb52f511d9cb",
           url: youtubeUrl.value,
           title: title.value,
           artist: artist.value
@@ -181,13 +180,12 @@ import { useMusicStore } from "@/stores/musicInfo";
         }
       }).then((response) =>{
         console.log("sccess put data");
-        loading.value = false;
         // DynamoDBに書き込んだ楽曲でAnalysisページへと遷移
         // また、テーブルから選択したときとobjectが一致するようにrawを追加
         musicStore.setAnalysisData({raw: response.data})
         router.push({ name: "Analysis"});
       }
-      ).catch((error)=>errorMessage.value = error.response?.data?.error || "An error occurred.")
+      ).catch((error)=>errorMessage.value = error.response?.data?.error || "An error occurred.").finally(()=>loading.value = false)
     }
 
     return {

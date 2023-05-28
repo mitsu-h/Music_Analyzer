@@ -86,7 +86,7 @@ def put_interval_info(
     user_id: str,
     analysis_id: str,
     last_played_position: int,
-    loop_intervals: list[list],
+    loop_intervals: list,
     loop_range_index: int,
     is_looping: bool,
     playback_speed: float,

@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import datetime
 from pathlib import Path
 import os
 
@@ -148,6 +148,15 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 )
+
+JWT_AUTH = {
+    'JWT_SECRET_KEY': SECRET_KEY,  # Same as Django's SECRET_KEY
+    'JWT_ALGORITHM': 'HS256',  # Encryption algorithm
+    'JWT_ALLOW_REFRESH': True,  # Allow token refresh
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),  # Token expiration time
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),  # Token refresh limit
+}
+
 
 # usernameを不要とする、カスタムユーザの登録
 AUTH_USER_MODEL = "api.CustomUser"

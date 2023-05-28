@@ -11,7 +11,7 @@ urlpatterns = [
     path("rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     path("music/video_info/", views.get_video_info, name="video_info"),
     path(
-        "analysis_results/<str:user_id>",
+        "analysis_results/",
         views.get_analysis_by_user_id,
         name="get_analysis_by_user_id",
     ),

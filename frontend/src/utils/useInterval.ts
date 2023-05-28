@@ -20,4 +20,6 @@ export function useInterval(callback: Function, delay: number) {
       savedCallback.value()
     }, delay)
   })
+
+  return intervalId
 }
