@@ -153,8 +153,8 @@ JWT_AUTH = {
     'JWT_SECRET_KEY': SECRET_KEY,  # Same as Django's SECRET_KEY
     'JWT_ALGORITHM': 'HS256',  # Encryption algorithm
     'JWT_ALLOW_REFRESH': True,  # Allow token refresh
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=1),  # Token expiration time
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),  # Token refresh limit
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),  # Token expiration time
+    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=28),  # Token refresh limit
 }
 
 

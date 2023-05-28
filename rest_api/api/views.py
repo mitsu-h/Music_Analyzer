@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from glob import glob
 
 import boto3
 from django.http import JsonResponse, HttpResponse
@@ -116,7 +117,8 @@ def download_and_separate_audio(request):
         duration,
         dynamodb_client,
     )
-    os.remove(original_audio_file)
+    for path in glob(original_audio_file.replace(".wav", "*")):
+        os.remove(path)
     serializer = AnalysisResultsSerializer(put_data)
 
     return Response(serializer.data)
