@@ -11,6 +11,12 @@ export const useAuthStore = defineStore("auth", {
     token: null,
     user: null,
   }),
+  persist: true,
+  getters: {
+    async isLoggedIn(state){
+        return state.token !== null && await this.checkToken();
+      }
+    },
   actions: {
     async login({ email, password }: { email: string; password: string }) {
       try {
@@ -39,6 +45,16 @@ export const useAuthStore = defineStore("auth", {
       this.user = null;
       // Remove JWT token from axios headers
       delete axios.defaults.headers.common["Authorization"];
+    },
+    async checkToken() {
+      try {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${this.token}`;
+        const response = await axios.get('http://localhost:8081/api/check_token/');
+        return response.status === 200;
+      } catch (error) {
+        console.error('Token check error:', error.message);
+        return false;
+      }
     },
   },
 });

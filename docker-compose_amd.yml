@@ -21,7 +21,7 @@ services:
     container_name: rest_api
     build:
       context: ./rest_api
-      dockerfile: Dockerfile_arm64
+      dockerfile: Dockerfile
     ports:
       - "8081:8081"
     volumes:

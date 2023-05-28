@@ -44,7 +44,6 @@
           <v-text-field 
                   label="YouTube URL" v-model="youtubeUrl"
                   :error-messages="errorMessage"
-                  :loading="loading"
                   append-inner-icon="$magnify"
                   @click:append-inner="searchVideoInfo">
           </v-text-field>
@@ -54,7 +53,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="dialog = false">Cancel</v-btn>
-          <v-btn color="blue darken-1" text @click="saveItem">Save</v-btn>
+          <v-btn color="blue darken-1" text :loading="loading" @click="saveItem">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -64,10 +63,12 @@
   </template>
   
   <script lang="ts">
-  import { defineComponent, ref, computed, onMounted, toRaw } from "vue";
+  import { defineComponent, ref, computed, onMounted } from "vue";
   import axios from "axios";
   import {mdiPlus} from "@mdi/js";
 import { useRouter } from "vue-router";
+import { useMusicStore } from "@/stores/musicInfo";
+import { useAuthStore } from "@/stores/auth";
 
   
 
@@ -79,21 +80,22 @@ import { useRouter } from "vue-router";
       { title: "Artist", key: "artist" },
       { title: "Last Edit", key: "updated_at" },
     ]);
-
+    const authStore = useAuthStore()
+    axios.defaults.headers.common["Authorization"] = `Bearer ${authStore.token}`;
     const search = ref("");
     async function fetchAnalysisResults() {
-      const response = await fetch("http://localhost:8081/api/analysis_results/a043bae1-6038-03a8-39c0-cb52f511d9cb");
-      const data = await response.json();
-      return data;
+      const response = await axios.get("http://localhost:8081/api/analysis_results/");
+      return response.data;
     }
     const items = ref([]);
+    const musicStore = useMusicStore()
     onMounted(async () => {
     items.value = await fetchAnalysisResults();
     console.log(items.value)
     });
 
     const filteredItems = computed(() => {
-      if(!items.value) return [];
+      if(!items.value.length) return [];
       return items.value.filter((item) => {
         return (
           item.title.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -128,7 +130,8 @@ import { useRouter } from "vue-router";
     const router = useRouter();
     const analyze = () => {
       if (selectedRow.value) {
-        router.push({ name: "Analysis", query: { analysisData: JSON.stringify(selectedRow.value) } });
+        musicStore.setAnalysisData(selectedRow.value)
+        router.push({ name: "Analysis"});
       }
     };
 
@@ -159,6 +162,32 @@ import { useRouter } from "vue-router";
       }
     };
 
+    const saveItem = () => {
+      if (!youtubeUrl.value) {
+        errorMessage.value = "Please input YouTube URL.";
+        return;
+      }
+      if (!title.value || !artist.value){
+        errorMessage.value = "Please click search icon or input title and artist.";
+      }
+      loading.value = true;
+      axios.get("http://localhost:8081/api/download_and_separate_audio/", {
+        params: {
+          url: youtubeUrl.value,
+          title: title.value,
+          artist: artist.value
+
+        }
+      }).then((response) =>{
+        console.log("sccess put data");
+        // DynamoDBに書き込んだ楽曲でAnalysisページへと遷移
+        // また、テーブルから選択したときとobjectが一致するようにrawを追加
+        musicStore.setAnalysisData({raw: response.data})
+        router.push({ name: "Analysis"});
+      }
+      ).catch((error)=>errorMessage.value = error.response?.data?.error || "An error occurred.").finally(()=>loading.value = false)
+    }
+
     return {
       mdiPlus,
       headers,
@@ -176,7 +205,8 @@ import { useRouter } from "vue-router";
       analyze,
       searchVideoInfo,
       dialog,
-      addItem
+      addItem,
+      saveItem
     };
   },
 });

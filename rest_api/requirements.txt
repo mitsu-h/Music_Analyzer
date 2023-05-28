@@ -8,5 +8,6 @@ djangorestframework-simplejwt
 dj-rest-auth
 django-allauth
 django-storages
-psycopg2
+psycopg2-binary
 yt_dlp
+spleeter

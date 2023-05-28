@@ -107,9 +107,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref, watch, computed } from 'vue'
+import { defineComponent, onMounted, ref, watch, computed, onBeforeUnmount } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useRouter } from 'vue-router'
+import { useMusicStore } from '@/stores/musicInfo'
 import axios from 'axios'
 import {
   fetchSeparatedAudioFiles,
@@ -117,6 +118,7 @@ import {
   audioBufferToBlob,
   createGainNodes
 } from '@/utils/audioHelper.ts'
+import {useInterval} from '@/utils/useInterval.ts'
 
 export default defineComponent({
   name: 'Analysis',
@@ -125,8 +127,9 @@ export default defineComponent({
   },
   setup() {
     const router = useRouter()
+    const musicStore = useMusicStore()
     const overlay = ref(true)
-    const analysisData = ref(null)
+    const analysisData = ref(musicStore.analysisData.raw)
     const audioURLs = ref([])
     const audioElements = ref([])
     const audioElementsRef = (el) => {
@@ -141,6 +144,9 @@ export default defineComponent({
     const durationTime = computed(() => formatTime(duration.value || 0))
     const gainNodes = ref([])
 
+    const intervalId = ref(null)
+    const timerId = ref(null)
+
     // トラックラベルとゲインのリアクティブ変数を定義
     const trackLabels = ['vocals', 'drums', 'bass', 'other']
     const gains = ref([0, 0, 0, 0])
@@ -149,7 +155,7 @@ export default defineComponent({
       //  console.log(audioContext.currentTime);
       playbackPosition.value = audioElements.value[0].currentTime
       currentTime.value = formatTime(audioElements.value[0].currentTime % duration.value)
-      setTimeout(() => {
+      timerId.value = setTimeout(() => {
         startTimer()
       }, 100)
     }
@@ -173,36 +179,6 @@ export default defineComponent({
       },
       { deep: true }
     )
-
-    onMounted(async () => {
-      analysisData.value = JSON.parse(router.currentRoute.value.query.analysisData)
-
-      try {
-        console.log(analysisData.value.raw.separated_audio_files)
-        const separatedAudioDataList = await fetchSeparatedAudioFiles(
-          analysisData.value.raw.separated_audio_files
-        )
-        console.log(separatedAudioDataList)
-        // ArrayBufferをAudioBufferにデコード
-        decodedAudioDataList.value = await Promise.all(
-          Object.values(separatedAudioDataList).map((arrayBuffer) =>
-            audioContext.decodeAudioData(arrayBuffer)
-          )
-        )
-        gainNodes.value = createGainNodes(decodedAudioDataList.value, audioContext, gains.value)
-        console.log(gainNodes.value)
-        duration.value = decodedAudioDataList.value[0].duration
-        decodedAudioDataList.value.forEach(
-          (audioBuffer, index) =>
-            (audioURLs.value[index] = URL.createObjectURL(audioBufferToBlob(audioBuffer)))
-        )
-        playAudioBuffers(audioElements.value, audioContext, gainNodes.value)
-        startTimer()
-        overlay.value = false
-      } catch (error) {
-        console.error('Error fetching audio:', error)
-      }
-    })
 
     // 選択範囲のループ再生
     const loopRanges = ref([
@@ -278,17 +254,80 @@ export default defineComponent({
       isPlaying.value = !isPlaying.value
     }
 
-    const speedOptions = [
-      0.5, 0.75, 1.0, 1.25, 1.5, 2.0
-      // { text: "0.5x", value: 0.5 },
-      // { text: "1x", value: 1 },
-      // { text: "1.5x", value: 1.5 },
-      // { text: "2x", value: 2 },
-    ]
     const selectedSpeed = ref(1)
     // selectedSpeed が変更されたときに playbackRate を更新
     watch(selectedSpeed, (newSpeed) => {
       audioElements.value.forEach((audioElement) => (audioElement.playbackRate = newSpeed))
+    })
+
+    onMounted(async () => {
+      // analysisData.value = JSON.parse(router.currentRoute.value.query.analysisData).raw
+
+      // try {
+        console.log(analysisData.value.separated_audio_files)
+        const separatedAudioDataList = await fetchSeparatedAudioFiles(
+          analysisData.value.separated_audio_files
+        )
+        console.log(separatedAudioDataList)
+        // ArrayBufferをAudioBufferにデコード
+        decodedAudioDataList.value = await Promise.all(
+          Object.values(separatedAudioDataList).map((arrayBuffer) =>
+            audioContext.decodeAudioData(arrayBuffer)
+          )
+        )
+        gainNodes.value = createGainNodes(decodedAudioDataList.value, audioContext, gains.value)
+        console.log(gainNodes.value)
+        decodedAudioDataList.value.forEach(
+          (audioBuffer, index) =>
+            (audioURLs.value[index] = URL.createObjectURL(audioBufferToBlob(audioBuffer)))
+        )
+        playAudioBuffers(audioElements.value, audioContext, gainNodes.value)
+
+        // DBの値をセット
+        audioElements.value.forEach((audioElement) => {
+          audioElement.currentTime = Number(analysisData.value.last_played_position)
+      })
+        duration.value = decodedAudioDataList.value[0].duration
+        loopRanges.value = JSON.parse(analysisData.value.loop_intervals)
+        currentLoopRangeIndex.value = Number(analysisData.value.loop_range_index)
+        isLooping.value = analysisData.value.is_looping
+        selectedSpeed.value = Number(analysisData.value.playback_speed)
+        audioElements.value.forEach((audioElement) => (audioElement.playbackRate = selectedSpeed.value))
+        gains.value = Object.values(JSON.parse(analysisData.value.instruments_volume))
+
+        startTimer()
+        overlay.value = false
+
+        // 30秒ごとに実行する関数
+        const saveIntervalInfo = async () => {
+          try {
+            const instruments_volume = trackLabels.reduce((acc, label, index) => {
+            acc[label] = gains.value[index];
+            return acc;
+          }, {});
+            await axios.post('http://localhost:8081/api/save_to_dynamodb/', {
+              user_id: analysisData.value.user_id,
+              analysis_id: analysisData.value.analysis_id,
+              last_played_position: playbackPosition.value,
+              loop_intervals: loopRanges.value,
+              loop_range_index: currentLoopRangeIndex.value,
+              is_looping: isLooping.value,
+              playback_speed: selectedSpeed.value,
+              instruments_volume: instruments_volume,
+            })
+          } catch (error) {
+            console.error('Failed to save interval info:', error)
+          }
+        }
+
+        // 30秒ごとにsaveIntervalInfoを実行
+        intervalId.value = useInterval(saveIntervalInfo, 30000)
+      // }
+    })
+
+    onBeforeUnmount(() => {
+      clearTimeout(timerId.value)
+      clearInterval(intervalId.value)
     })
 
     return {
@@ -311,7 +350,6 @@ export default defineComponent({
       formatTime,
       controllPlayback,
       audioURLs,
-      speedOptions,
       selectedSpeed,
       isPlaying
     }
