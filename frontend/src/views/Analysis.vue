@@ -5,57 +5,40 @@
       <v-overlay v-model="overlay" class="align-center justify-center">
         <v-progress-circular color="primary" indeterminate size="64"></v-progress-circular>
       </v-overlay>
-      <h1>Analysis</h1>
+      <h1>{{ analysisData.title }} / {{ analysisData.artist }}</h1>
       <v-container fluid>
         <!-- 選択範囲の表示・編集 -->
         <div>
           <h2>Loop Range {{ currentLoopRangeIndex }}</h2>
-          <v-range-slider
-            v-model="loopRanges[currentLoopRangeIndex]"
-            step="0.1"
-            min="0"
-            :max="duration"
-            class="loop-range"
-          >
-            <template v-slot:prepend>
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-chip v-bind="attrs" v-on="on">{{
-                    formatTime(loopRanges[currentLoopRangeIndex][0])
-                  }}</v-chip>
-                </template>
-                <span>Start</span>
-              </v-tooltip>
-            </template>
-            <template v-slot:append>
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-chip v-bind="attrs" v-on="on">{{
-                    formatTime(loopRanges[currentLoopRangeIndex][1])
-                  }}</v-chip>
-                </template>
-                <span>End</span>
-              </v-tooltip>
-            </template>
-          </v-range-slider>
-        </div>
-
-        <audio
+          <audio
           v-for="(track, index) in trackLabels"
           :key="index"
           :ref="audioElementsRef"
           :src="audioURLs[index]"
           preload="auto"
         ></audio>
+          <v-range-slider
+            v-model="loopRanges[currentLoopRangeIndex]"
+            step="0.1"
+            min="0"
+            :max="duration"
+            class="loop-range"
+            style="width: 100%; margin-top: 2em;"
+            thumb-label="always"
+          >
+            <template v-slot:thumb-label="{ modelValue }">
+              {{ formatTime(modelValue) }}
+            </template>
+          </v-range-slider>
+        </div>
         <v-slider
           v-bind:model-value="playbackPosition"
           @click="controllPlayback"
           @input="controllPlayback"
-          label="Playback Position"
           step="0.1"
           min="0"
           :max="duration"
-          thumb-size="24"
+          style="width: 100%; margin-top: -2em;"
         ></v-slider>
         <!-- 操作系のボタン -->
         <div style="display: flex; align-items: center">

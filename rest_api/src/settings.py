@@ -149,12 +149,11 @@ AUTHENTICATION_BACKENDS = (
     "allauth.account.auth_backends.AuthenticationBackend",
 )
 
-JWT_AUTH = {
-    'JWT_SECRET_KEY': SECRET_KEY,  # Same as Django's SECRET_KEY
-    'JWT_ALGORITHM': 'HS256',  # Encryption algorithm
-    'JWT_ALLOW_REFRESH': True,  # Allow token refresh
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),  # Token expiration time
-    'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=28),  # Token refresh limit
+SIMPLE_JWT = {
+    "ROTATE_REFRESH_TOKENS": True,  # Allow token refresh
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=7),  # Token expiration time
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=28),  # Token refresh limit
+    "UPDATE_LAST_LOGIN": True,
 }
 
 
