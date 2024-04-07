@@ -32,6 +32,11 @@
               {{ item.columns.title }}</td>
               <td>{{ item.columns.artist }}</td>
             <td>{{ item.columns.updated_at }}</td>
+            <td>
+          <v-btn icon @click="deleteItem(item)">
+            <v-icon :icon="mdiDelete"></v-icon>
+          </v-btn>
+        </td>
           </tr>
         </template>
     </v-data-table>
@@ -65,7 +70,7 @@
   <script lang="ts">
   import { defineComponent, ref, computed, onMounted } from "vue";
   import axios from "axios";
-  import {mdiPlus} from "@mdi/js";
+  import {mdiPlus, mdiDelete} from "@mdi/js";
 import { useRouter } from "vue-router";
 import { useMusicStore } from "@/stores/musicInfo";
 import { useAuthStore } from "@/stores/auth";
@@ -188,8 +193,13 @@ import { useAuthStore } from "@/stores/auth";
       ).catch((error)=>errorMessage.value = error.response?.data?.error || "An error occurred.").finally(()=>loading.value = false)
     }
 
+    const deleteItem = async (item: any) => {
+      console.log("del")
+    }
+
     return {
       mdiPlus,
+      mdiDelete,
       headers,
       search,
       filteredItems,
@@ -206,7 +216,8 @@ import { useAuthStore } from "@/stores/auth";
       searchVideoInfo,
       dialog,
       addItem,
-      saveItem
+      saveItem,
+      deleteItem,
     };
   },
 });
