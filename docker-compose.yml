@@ -61,7 +61,7 @@ services:
     image: minio/minio:latest
     container_name: minio
     entrypoint: bash
-    command: -c "/opt/bin/minio server /export --address :9999 --console-address :9001"
+    command: -c "/usr/bin/minio server /export --address :9999 --console-address :9001"
     volumes:
         - ./minio_data:/export  # MinIOストレージの永続化
     ports:

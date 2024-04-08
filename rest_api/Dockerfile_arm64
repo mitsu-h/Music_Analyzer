@@ -1,5 +1,5 @@
 # Python の公式イメージをベースにします
-FROM armswdev/tensorflow-arm-neoverse:latest
+FROM python:3.9.19
 
 USER root
 # ワーキングディレクトリを設定します
@@ -10,10 +10,10 @@ RUN apt-get update && \
     apt-get install -y ffmpeg
 
 # /tmp_audio/ ディレクトリの所有者を非rootユーザーに変更
-RUN mkdir /tmp_audio/ && chown 1000:1000 /tmp_audio/
+# RUN mkdir /tmp_audio/ && chown 1000:1000 /tmp_audio/
 
 # requirements.txt をコピーし、依存関係をインストールします
-USER 1000
+# USER 1000
 COPY requirements.txt ./
 RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
