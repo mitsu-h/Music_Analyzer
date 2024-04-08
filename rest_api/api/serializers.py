@@ -3,7 +3,6 @@ from dj_rest_auth.registration.serializers import (
     RegisterSerializer as DefaultRegisterSerializer,
 )
 from dj_rest_auth.serializers import UserDetailsSerializer
-from allauth.utils import email_address_exists, get_username_max_length
 
 from django.contrib.auth import get_user_model
 

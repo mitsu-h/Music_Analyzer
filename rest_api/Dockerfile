@@ -1,5 +1,5 @@
 # Python の公式イメージをベースにします
-FROM tensorflow/tensorflow
+FROM python:3.9.19
 
 # ワーキングディレクトリを設定します
 WORKDIR /app
